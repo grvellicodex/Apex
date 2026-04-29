@@ -1,0 +1,59 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default Deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper Functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    // Crucible Output Validation
+    function isValidCrucibleOutput(data) {
+      return data.keys().hasAll(['type', 'content', 'prompt', 'authorId', 'createdAt'])
+        && data.keys().size() <= 7 
+        && data.type in ['image', 'audio', 'experiment']
+        && data.content is string && data.content.size() <= 2000000 
+        && data.prompt is string && data.prompt.size() <= 1000
+        && data.authorId == request.auth.uid
+        && data.createdAt == request.time;
+    }
+
+    function isValidSimulationPreset(data) {
+      return data.keys().hasAll(['name', 'mode', 'authorId', 'createdAt'])
+        && data.keys().size() <= 8
+        && data.name is string && data.name.size() <= 100
+        && data.mode in ['image', 'audio', 'experiment']
+        && data.authorId == request.auth.uid
+        && data.createdAt == request.time;
+    }
+
+    match /crucible_outputs/{outputId} {
+      allow list: if isSignedIn();
+      allow get: if isSignedIn();
+      allow create: if isSignedIn() 
+        && isValidId(outputId)
+        && isValidCrucibleOutput(incoming());
+    }
+
+    match /simulation_presets/{presetId} {
+      allow list: if isSignedIn() && resource.data.authorId == request.auth.uid;
+      allow get: if isSignedIn() && resource.data.authorId == request.auth.uid;
+      allow create: if isSignedIn()
+        && isValidId(presetId)
+        && isValidSimulationPreset(incoming());
+      allow delete: if isSignedIn() && resource.data.authorId == request.auth.uid;
+    }
+  }
+}

@@ -1,0 +1,63 @@
+{
+  "entities": {
+    "CrucibleOutput": {
+      "title": "Crucible Output",
+      "description": "A shared creative output in the collaborative sandbox",
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["image", "audio", "experiment"],
+          "description": "The modality of the output"
+        },
+        "content": {
+          "type": "string",
+          "description": "The generated asset content (data URI or JSON string)"
+        },
+        "prompt": {
+          "type": "string",
+          "description": "The user prompt that generated this output"
+        },
+        "authorId": {
+          "type": "string",
+          "description": "UID of the creator"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of creation"
+        },
+        "metadata": {
+          "type": "object",
+          "description": "Additional experiment data"
+        }
+      },
+      "required": ["type", "content", "prompt", "authorId", "createdAt"]
+    },
+    "SimulationPreset": {
+      "title": "Simulation Preset",
+      "description": "Saved creative parameters and prompts",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "mode": { "type": "string" },
+        "input": { "type": "string" },
+        "authorId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "parameters": { "type": "object" },
+        "parameterBreakdown": { "type": "object" }
+      },
+      "required": ["name", "mode", "authorId", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/crucible_outputs/{outputId}": {
+      "schema": "CrucibleOutput",
+      "description": "Global collection of student creations"
+    },
+    "/simulation_presets/{presetId}": {
+      "schema": "SimulationPreset",
+      "description": "Saved user simulation configurations"
+    }
+  }
+}
